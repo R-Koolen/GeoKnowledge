@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Higher or Lower — GeoKnowledge</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1><a class="brand" href="../">← GeoKnowledge</a></h1>
+    <div class="topbar-right">
+      <span>Score: <strong id="score">0</strong></span>
+      <span>Best: <strong id="best">0</strong></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stat-picker" aria-label="Choose stat">
+      <label for="stat">Stat:</label>
+      <select id="stat">
+        <option value="passport_rank">Passport power</option>
+        <option value="gdp_per_capita_usd">GDP per capita</option>
+        <option value="coastline_km">Coastline</option>
+        <option value="population">Population</option>
+        <option value="area_km2">Area</option>
+      </select>
+    </section>
+
+    <section id="board" class="board" aria-live="polite">
+      <article class="card" id="left-card">
+        <img class="flag" id="left-flag" alt="" />
+        <h2 class="country" id="left-name"></h2>
+        <p class="meta"><span id="left-capital"></span> · <span id="left-continent"></span></p>
+        <p class="stat-label" id="left-stat-label"></p>
+        <p class="stat-value" id="left-stat-value"></p>
+      </article>
+
+      <article class="card" id="right-card">
+        <img class="flag" id="right-flag" alt="" />
+        <h2 class="country" id="right-name"></h2>
+        <p class="meta"><span id="right-capital"></span> · <span id="right-continent"></span></p>
+        <p class="stat-label" id="right-stat-label"></p>
+        <p class="stat-value hidden" id="right-stat-value"></p>
+        <div class="choice-buttons" id="choice-buttons">
+          <button type="button" class="btn" data-choice="higher">Higher ▲</button>
+          <button type="button" class="btn" data-choice="lower">Lower ▼</button>
+        </div>
+        <button type="button" id="next-btn" class="btn btn--ghost next-btn hidden">Next →</button>
+      </article>
+    </section>
+
+    <section id="game-over" class="game-over hidden">
+      <h2>Game over</h2>
+      <p>Your score: <strong id="final-score">0</strong></p>
+      <button type="button" id="play-again" class="btn">Play again</button>
+    </section>
+
+    <p id="loading" class="loading">Loading countries…</p>
+  </main>
+
+  <footer>
+    <p>Is the right country higher or lower than the left for the chosen stat?</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

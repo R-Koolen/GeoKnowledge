@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Netherlands",
+    "code": "NL",
+    "flag": "🇳🇱",
+    "capital": "Amsterdam",
+    "continent": "Europe",
+    "population": 17800000,
+    "area_km2": 41850,
+    "coastline_km": 451,
+    "gdp_per_capita_usd": 61770,
+    "passport_rank": 3
+  },
+  {
+    "name": "United States",
+    "code": "US",
+    "flag": "🇺🇸",
+    "capital": "Washington, D.C.",
+    "continent": "North America",
+    "population": 334900000,
+    "area_km2": 9833517,
+    "coastline_km": 19924,
+    "gdp_per_capita_usd": 81630,
+    "passport_rank": 8
+  },
+  {
+    "name": "Japan",
+    "code": "JP",
+    "flag": "🇯🇵",
+    "capital": "Tokyo",
+    "continent": "Asia",
+    "population": 124500000,
+    "area_km2": 377975,
+    "coastline_km": 29751,
+    "gdp_per_capita_usd": 33800,
+    "passport_rank": 1
+  },
+  {
+    "name": "Brazil",
+    "code": "BR",
+    "flag": "🇧🇷",
+    "capital": "Brasília",
+    "continent": "South America",
+    "population": 215300000,
+    "area_km2": 8515767,
+    "coastline_km": 7491,
+    "gdp_per_capita_usd": 10410,
+    "passport_rank": 19
+  },
+  {
+    "name": "Australia",
+    "code": "AU",
+    "flag": "🇦🇺",
+    "capital": "Canberra",
+    "continent": "Oceania",
+    "population": 26500000,
+    "area_km2": 7692024,
+    "coastline_km": 25760,
+    "gdp_per_capita_usd": 64820,
+    "passport_rank": 6
+  },
+  {
+    "name": "Egypt",
+    "code": "EG",
+    "flag": "🇪🇬",
+    "capital": "Cairo",
+    "continent": "Africa",
+    "population": 110000000,
+    "area_km2": 1001450,
+    "coastline_km": 2450,
+    "gdp_per_capita_usd": 3770,
+    "passport_rank": 88
+  },
+  {
+    "name": "India",
+    "code": "IN",
+    "flag": "🇮🇳",
+    "capital": "New Delhi",
+    "continent": "Asia",
+    "population": 1428600000,
+    "area_km2": 3287263,
+    "coastline_km": 7000,
+    "gdp_per_capita_usd": 2480,
+    "passport_rank": 80
+  },
+  {
+    "name": "Norway",
+    "code": "NO",
+    "flag": "🇳🇴",
+    "capital": "Oslo",
+    "continent": "Europe",
+    "population": 5500000,
+    "area_km2": 385207,
+    "coastline_km": 25148,
+    "gdp_per_capita_usd": 87960,
+    "passport_rank": 3
+  },
+  {
+    "name": "South Africa",
+    "code": "ZA",
+    "flag": "🇿🇦",
+    "capital": "Pretoria",
+    "continent": "Africa",
+    "population": 60400000,
+    "area_km2": 1221037,
+    "coastline_km": 2798,
+    "gdp_per_capita_usd": 6190,
+    "passport_rank": 48
+  },
+  {
+    "name": "Singapore",
+    "code": "SG",
+    "flag": "🇸🇬",
+    "capital": "Singapore",
+    "continent": "Asia",
+    "population": 5900000,
+    "area_km2": 728,
+    "coastline_km": 193,
+    "gdp_per_capita_usd": 84730,
+    "passport_rank": 1
+  }
+]
