@@ -1,0 +1,10 @@
+.vscode/settings.json
+
+# Data pipeline cache
+data/.cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

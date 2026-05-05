@@ -4,33 +4,49 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GeoKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="home.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1><a class="brand" href="./">GeoKnowledge</a></h1>
+    <h1>
+      <a class="brand" href="./">
+        <span class="brand__dot" aria-hidden="true"></span>
+        GeoKnowledge
+      </a>
+    </h1>
   </header>
 
   <main>
-    <section class="hero">
-      <h2>Test your geography knowledge.</h2>
-      <p class="lead">Pick a game below</p>
+    <section>
+      <h2 class="section-title">Daily Games</h2>
+      <nav class="tile-grid" aria-label="Games">
+        <a class="tile tile--pink" href="higher-lower/">
+          <span class="tile__badge">NEW</span>
+          <span class="tile__art" aria-hidden="true">
+            <span class="tile__art-card tile__art-card--up">▲</span>
+            <span class="tile__art-card tile__art-card--down">▼</span>
+          </span>
+          <span class="tile__title">Higher or Lower</span>
+        </a>
+
+        <div class="tile tile--orange tile--soon" aria-disabled="true">
+          <span class="tile__art" aria-hidden="true">🗺️</span>
+          <span class="tile__title">More games</span>
+          <span class="tile__sub">Coming soon</span>
+        </div>
+
+        <div class="tile tile--green tile--soon" aria-disabled="true">
+          <span class="tile__art" aria-hidden="true">🧩</span>
+          <span class="tile__title">More games</span>
+          <span class="tile__sub">Coming soon</span>
+        </div>
+      </nav>
     </section>
-
-    <nav class="game-list" aria-label="Games">
-      <a class="game-card" href="higher-lower/">
-        <span class="game-card__emoji" aria-hidden="true">📈</span>
-        <span class="game-card__title">Higher or Lower</span>
-        <span class="game-card__desc">Two countries, one stat. Guess which is higher.</span>
-      </a>
-
-      <div class="game-card game-card--soon" aria-disabled="true">
-        <span class="game-card__emoji" aria-hidden="true">🧭</span>
-        <span class="game-card__title">More games</span>
-        <span class="game-card__desc">Coming soon.</span>
-      </div>
-    </nav>
   </main>
 
   <footer>

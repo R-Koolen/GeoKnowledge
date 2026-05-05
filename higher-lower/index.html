@@ -4,64 +4,89 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Higher or Lower — GeoKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
   <link rel="stylesheet" href="../styles.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1><a class="brand" href="../">← GeoKnowledge</a></h1>
-    <div class="topbar-right">
-      <span>Score: <strong id="score">0</strong></span>
-      <span>Best: <strong id="best">0</strong></span>
-    </div>
+    <h1>
+      <a class="brand" href="../">
+        <span class="brand__dot" aria-hidden="true"></span>
+        GeoKnowledge
+      </a>
+    </h1>
   </header>
 
   <main>
-    <section class="stat-picker" aria-label="Choose stat">
-      <label for="stat">Stat:</label>
-      <select id="stat">
-        <option value="passport_rank">Passport power</option>
-        <option value="gdp_per_capita_usd">GDP per capita</option>
-        <option value="coastline_km">Coastline</option>
-        <option value="population">Population</option>
-        <option value="area_km2">Area</option>
-      </select>
+    <!-- START SCREEN -->
+    <section id="start-screen" class="screen">
+      <h2 class="screen__title">Higher or Lower</h2>
+      <p class="screen__lead">
+        Pick a stat. Two countries appear stacked. Decide if the top country's value is
+        <strong>higher</strong> or <strong>lower</strong> than the bottom one. Get
+        <strong>8 in a row</strong> to win — one wrong answer ends the game.
+      </p>
+
+      <div class="stat-picker">
+        <label for="stat">Stat</label>
+        <select id="stat">
+          <option value="passport_rank">🛂 Passport Power</option>
+          <option value="gdp_per_capita_usd">💵 GDP per Capita</option>
+          <option value="coastline_km">🌊 Coastline</option>
+          <option value="population">👥 Population</option>
+          <option value="area_km2">🗺️ Area</option>
+        </select>
+      </div>
+
+      <button type="button" id="start-btn" class="btn btn--blue btn--xl">▶ Start</button>
+      <p id="loading" class="loading">Loading countries…</p>
     </section>
 
-    <section id="board" class="board" aria-live="polite">
-      <article class="card" id="left-card">
-        <img class="flag" id="left-flag" alt="" />
-        <h2 class="country" id="left-name"></h2>
-        <p class="meta"><span id="left-capital"></span> · <span id="left-continent"></span></p>
-        <p class="stat-label" id="left-stat-label"></p>
-        <p class="stat-value" id="left-stat-value"></p>
+    <!-- GAME BOARD -->
+    <section id="board" class="board hidden" aria-live="polite">
+      <div class="board__topbar">
+        <span class="pill"><strong id="round">1</strong> / <strong id="total-rounds">8</strong></span>
+        <span class="pill" id="stat-label">📊 Stat</span>
+      </div>
+
+      <article class="country" id="bottom-country">
+        <img class="flag" id="bottom-flag" alt="" />
+        <h2 class="country__name" id="bottom-name"></h2>
+        <p class="country__value" id="bottom-value"></p>
       </article>
 
-      <article class="card" id="right-card">
-        <img class="flag" id="right-flag" alt="" />
-        <h2 class="country" id="right-name"></h2>
-        <p class="meta"><span id="right-capital"></span> · <span id="right-continent"></span></p>
-        <p class="stat-label" id="right-stat-label"></p>
-        <p class="stat-value hidden" id="right-stat-value"></p>
-        <div class="choice-buttons" id="choice-buttons">
-          <button type="button" class="btn" data-choice="higher">Higher ▲</button>
-          <button type="button" class="btn" data-choice="lower">Lower ▼</button>
-        </div>
-        <button type="button" id="next-btn" class="btn btn--ghost next-btn hidden">Next →</button>
+      <div class="vs"><span>v s</span></div>
+
+      <article class="country" id="top-country">
+        <img class="flag" id="top-flag" alt="" />
+        <h2 class="country__name" id="top-name"></h2>
+        <p class="country__value country__value--hidden" id="top-value">•••</p>
       </article>
+      
+
+      <div class="choice-buttons" id="choice-buttons">
+        <button type="button" class="btn btn--good" data-choice="higher">▲ Higher</button>
+        <button type="button" class="btn btn--bad"  data-choice="lower">▼ Lower</button>
+      </div>
     </section>
 
-    <section id="game-over" class="game-over hidden">
-      <h2>Game over</h2>
-      <p>Your score: <strong id="final-score">0</strong></p>
-      <button type="button" id="play-again" class="btn">Play again</button>
+    <!-- END SCREEN -->
+    <section id="end-screen" class="screen hidden">
+      <h2 id="end-title" class="screen__title">Game over</h2>
+      <p class="screen__lead">
+        Final score: <strong id="final-score">0</strong> / <span id="final-total">8</span>
+      </p>
+      <button type="button" id="play-again" class="btn btn--blue btn--xl">↻ Play again</button>
+      <a class="btn btn--soft" href="../">⌂ Home</a>
     </section>
-
-    <p id="loading" class="loading">Loading countries…</p>
   </main>
 
   <footer>
-    <p>Is the right country higher or lower than the left for the chosen stat?</p>
+    <p>Higher or lower than the bottom country?</p>
   </footer>
 
   <script src="app.js"></script>
