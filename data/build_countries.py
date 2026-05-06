@@ -1,383 +1,289 @@
-"""Rebuild data/countries.json from public APIs / open datasets.
+"""Build data/countries.json from public sources.
 
-Run from the repo root:
-    python data/build_countries.py                # build with on-disk cache
-    python data/build_countries.py --no-cache     # ignore cache, hit network
-    python data/build_countries.py --out path     # write somewhere else
+Each source is fetched once and saved as its own shard under data/raw/.
+The merger reads from the shards, never from the network.
 
-Sources (all free, no API key):
-- REST Countries v3.1            base rows + name/code/capital/continent/population/area/flag
-- World Bank Indicators API      gdp_per_capita_usd (NY.GDP.PCAP.CD)
-- ilyankou/passport-index-dataset passport_rank (computed from visa-free counts)
-- factbook/factbook.json         coastline_km (parsed from CIA Factbook geography text)
+Refresh a stat:        rm data/raw/<stat>.json && python data/build_countries.py
+Refresh everything:    rm -r data/raw && python data/build_countries.py
+Add a new factbook stat:
+    1. Write a tiny extract_*(fb) function below.
+    2. Add a tuple to FACTBOOK_STATS: (output_field, shard_filename, extractor).
+    3. Add a STAT_META entry + <option> in higher-lower/.
 """
 
 from __future__ import annotations
 
-import argparse
-import csv
-import hashlib
-import io
 import json
-import os
 import re
-import sys
-import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import requests
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = REPO_ROOT / "data"
-CACHE_DIR = DATA_DIR / ".cache"
-DEFAULT_OUT = DATA_DIR / "countries.json"
-
-REST_COUNTRIES_URL = (
-    "https://restcountries.com/v3.1/all"
-    "?fields=name,cca2,cca3,capital,region,population,area,flag,unMember"
-)
-WORLDBANK_URL = (
-    "https://api.worldbank.org/v2/country/{cca3}/indicator/NY.GDP.PCAP.CD"
-    "?format=json&per_page=20"
-)
-PASSPORT_MATRIX_URL = (
-    "https://raw.githubusercontent.com/ilyankou/passport-index-dataset/master/"
-    "passport-index-matrix-iso2.csv"
-)
-# REST Countries' region → factbook.json folder name.
-FACTBOOK_REGION_DIR = {
-    "Africa": "africa",
-    "Americas": "central-america-n-caribbean",  # overridden per-country below
-    "Asia": "east-n-southeast-asia",            # overridden per-country below
-    "Europe": "europe",
-    "Oceania": "australia-oceania",
-    "Antarctic": "antarctica",
-}
-# factbook.json splits the world into many sub-folders; the safe approach is
-# to try each candidate folder until one resolves.
-FACTBOOK_CANDIDATE_DIRS = [
-    "africa",
-    "europe",
-    "australia-oceania",
-    "antarctica",
-    "central-america-n-caribbean",
-    "north-america",
-    "south-america",
-    "east-n-southeast-asia",
-    "south-asia",
-    "central-asia",
-    "middle-east",
-    "oceans",
-]
-FACTBOOK_FILE_URL = (
-    "https://raw.githubusercontent.com/factbook/factbook.json/master/{folder}/{slug}.json"
-)
+DATA = Path(__file__).resolve().parent
+RAW = DATA / "raw"
+OUT = DATA / "countries.json"
 
 
-# ---------------------------------------------------------------------------
-# HTTP with on-disk cache + retries
-# ---------------------------------------------------------------------------
-
-def _cache_path(url: str) -> Path:
-    h = hashlib.sha1(url.encode("utf-8")).hexdigest()[:16]
-    return CACHE_DIR / f"{h}.bin"
-
-
-def http_get(url: str, *, use_cache: bool = True, allow_404: bool = False) -> bytes | None:
-    """GET with retries + on-disk cache. Returns body bytes or None on 404 if allow_404."""
-    if use_cache:
-        cp = _cache_path(url)
-        if cp.exists():
-            return cp.read_bytes()
-
-    last_err: Exception | None = None
-    for attempt in range(3):
-        try:
-            r = requests.get(url, timeout=30, headers={"User-Agent": "GeoKnowledge build"})
-            if r.status_code == 404 and allow_404:
-                return None
-            r.raise_for_status()
-            data = r.content
-            if use_cache:
-                CACHE_DIR.mkdir(parents=True, exist_ok=True)
-                _cache_path(url).write_bytes(data)
-            return data
-        except Exception as e:
-            last_err = e
-            time.sleep(2 ** attempt)
-    raise RuntimeError(f"GET failed after retries: {url} ({last_err})")
+def load_or_build(path: Path, builder: Callable[[], Any]) -> Any:
+    """Return contents of `path` if it exists, else call builder() and save."""
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    print(f"fetching {path.name}…")
+    data = builder()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return data
 
 
-# ---------------------------------------------------------------------------
-# Source 1: REST Countries — base rows
-# ---------------------------------------------------------------------------
+# --- fetchers --------------------------------------------------------------
 
-def fetch_rest_countries(use_cache: bool) -> list[dict[str, Any]]:
-    raw = http_get(REST_COUNTRIES_URL, use_cache=use_cache)
-    items = json.loads(raw)
-    base: list[dict[str, Any]] = []
+def fetch_base() -> list[dict[str, Any]]:
+    """REST Countries — UN members with the fields downstream sources need."""
+    url = ("https://restcountries.com/v3.1/all"
+           "?fields=name,cca2,cca3,capital,region,population,area,unMember,landlocked,borders")
+    items = requests.get(url, timeout=30).json()
+    rows = []
     for c in items:
         if not c.get("unMember"):
             continue
-        cca2 = c.get("cca2")
-        cca3 = c.get("cca3")
-        name = (c.get("name") or {}).get("common")
-        if not (cca2 and cca3 and name):
-            continue
-        capitals = c.get("capital") or []
-        base.append({
-            "name": name,
-            "code": cca2,
-            "cca3": cca3,
-            "flag": c.get("flag"),
-            "capital": capitals[0] if capitals else None,
+        caps = c.get("capital") or []
+        rows.append({
+            "name": c["name"]["common"],
+            "code": c["cca2"],
+            "cca3": c["cca3"],
+            "capital": caps[0] if caps else None,
             "continent": c.get("region"),
             "population": c.get("population"),
             "area_km2": c.get("area"),
-        })
-    base.sort(key=lambda r: r["name"])
-    return base
-
-
-# ---------------------------------------------------------------------------
-# Source 2: World Bank — GDP per capita (current US$)
-# ---------------------------------------------------------------------------
-
-def fetch_worldbank_gdp(cca3_list: list[str], use_cache: bool) -> dict[str, float]:
-    out: dict[str, float] = {}
-    for cca3 in cca3_list:
-        url = WORLDBANK_URL.format(cca3=cca3)
-        try:
-            raw = http_get(url, use_cache=use_cache, allow_404=True)
-        except Exception as e:
-            print(f"  ! GDP fetch failed for {cca3}: {e}", file=sys.stderr)
-            continue
-        if raw is None:
-            continue
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(payload, list) or len(payload) < 2 or not payload[1]:
-            continue
-        # Most-recent non-null value
-        for row in payload[1]:
-            v = row.get("value")
-            if v is not None:
-                out[cca3] = float(v)
-                break
-    return out
-
-
-# ---------------------------------------------------------------------------
-# Source 3: Passport Index — rank by visa-free count
-# ---------------------------------------------------------------------------
-
-_VISA_FREE_TOKENS = {"visa free", "visa on arrival", "e-visa", "covid-19 ban"}
-# "covid-19 ban" was used historically for some rows — treat conservatively as
-# *not* visa-free. Keep this set strict: visa free + VOA + e-visa, plus any
-# integer cell (= number of visa-free days).
-
-
-def _is_visa_free(cell: str) -> bool:
-    s = (cell or "").strip().lower()
-    if not s or s == "-1" or s == "-":
-        return False
-    if s in {"visa free", "visa on arrival", "e-visa"}:
-        return True
-    # Numeric → number of visa-free days granted
-    try:
-        return int(s) > 0
-    except ValueError:
-        return False
-
-
-def fetch_passport_ranks(use_cache: bool) -> dict[str, int]:
-    raw = http_get(PASSPORT_MATRIX_URL, use_cache=use_cache)
-    text = raw.decode("utf-8-sig")
-    reader = csv.reader(io.StringIO(text))
-    rows = list(reader)
-    if not rows:
-        return {}
-    header = rows[0]
-    # First column is the holder country code; remaining columns are destinations.
-    scores: dict[str, int] = {}
-    for row in rows[1:]:
-        if not row:
-            continue
-        holder = row[0].strip().upper()
-        if not holder or len(holder) != 2:
-            continue
-        score = 0
-        for i, cell in enumerate(row[1:], start=1):
-            if i >= len(header):
-                break
-            dest = header[i].strip().upper()
-            if dest == holder:
-                continue  # don't count self
-            if _is_visa_free(cell):
-                score += 1
-        scores[holder] = score
-
-    # Dense rank: highest score = rank 1, ties share a rank.
-    ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
-    ranks: dict[str, int] = {}
-    last_score: int | None = None
-    current_rank = 0
-    for code, score in ranked:
-        if score != last_score:
-            current_rank += 1
-            last_score = score
-        ranks[code] = current_rank
-    return ranks
-
-
-# ---------------------------------------------------------------------------
-# Source 4: factbook.json — coastline (km)
-# ---------------------------------------------------------------------------
-
-_COAST_NUM_RE = re.compile(r"([\d,]+(?:\.\d+)?)\s*km")
-
-
-def _parse_coast_text(text: str) -> float | None:
-    if not text:
-        return None
-    s = text.lower()
-    if "landlocked" in s or "0 km" in s.replace(",", ""):
-        return 0.0
-    m = _COAST_NUM_RE.search(s)
-    if not m:
-        return None
-    try:
-        return float(m.group(1).replace(",", ""))
-    except ValueError:
-        return None
-
-
-def _factbook_slug(name: str) -> str:
-    s = name.lower()
-    s = s.replace("&", "and")
-    s = re.sub(r"[(),.']", "", s)
-    s = re.sub(r"[\s/]+", "-", s).strip("-")
-    return s
-
-
-def fetch_coastlines(rows: list[dict[str, Any]], use_cache: bool) -> dict[str, float | None]:
-    out: dict[str, float | None] = {}
-    for r in rows:
-        cca2 = r["code"]
-        slug = _factbook_slug(r["name"])
-        found_text: str | None = None
-        for folder in FACTBOOK_CANDIDATE_DIRS:
-            url = FACTBOOK_FILE_URL.format(folder=folder, slug=slug)
-            try:
-                raw = http_get(url, use_cache=use_cache, allow_404=True)
-            except Exception:
-                raw = None
-            if raw is None:
-                continue
-            try:
-                payload = json.loads(raw)
-            except json.JSONDecodeError:
-                continue
-            geo = payload.get("Geography") or {}
-            coast = geo.get("Coastline") or {}
-            txt = coast.get("text")
-            if txt:
-                found_text = txt
-                break
-        out[cca2] = _parse_coast_text(found_text) if found_text is not None else None
-    return out
-
-
-# ---------------------------------------------------------------------------
-# Merge + write
-# ---------------------------------------------------------------------------
-
-def build_rows(
-    base: list[dict[str, Any]],
-    gdp_by_cca3: dict[str, float],
-    rank_by_cca2: dict[str, int],
-    coast_by_cca2: dict[str, float | None],
-) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for b in base:
-        cca2 = b["code"]
-        cca3 = b["cca3"]
-        gdp = gdp_by_cca3.get(cca3)
-        rows.append({
-            "name": b["name"],
-            "code": cca2,
-            "flag": b.get("flag"),
-            "capital": b.get("capital"),
-            "continent": b.get("continent"),
-            "population": b.get("population"),
-            "area_km2": b.get("area_km2"),
-            "coastline_km": coast_by_cca2.get(cca2),
-            "gdp_per_capita_usd": round(gdp, 2) if gdp is not None else None,
-            "passport_rank": rank_by_cca2.get(cca2),
+            "landlocked": bool(c.get("landlocked")),
+            "borders": c.get("borders") or [],
         })
     rows.sort(key=lambda r: r["name"])
     return rows
 
 
-def coverage_report(rows: list[dict[str, Any]]) -> None:
-    fields = [
-        "capital", "continent", "population", "area_km2",
-        "coastline_km", "gdp_per_capita_usd", "passport_rank",
-    ]
-    total = len(rows)
-    print(f"\nUN members: {total}")
-    width = max(len(f) for f in fields)
-    for f in fields:
-        n = sum(1 for r in rows if r.get(f) is not None)
-        print(f"  {f.ljust(width)}  {n}/{total}")
+def fetch_gdp(cca3_list: list[str]) -> dict[str, float]:
+    """World Bank — most recent NY.GDP.PCAP.CD per country, keyed by ISO3."""
+    url = ("https://api.worldbank.org/v2/country/all/indicator/NY.GDP.PCAP.CD"
+           "?format=json&per_page=20000&mrnev=1")
+    payload = requests.get(url, timeout=60).json()
+    if not isinstance(payload, list) or len(payload) < 2:
+        return {}
+    wanted = set(cca3_list)
+    out: dict[str, float] = {}
+    for row in payload[1] or []:
+        iso3 = row.get("countryiso3code")
+        value = row.get("value")
+        if iso3 in wanted and value is not None:
+            out[iso3] = round(float(value), 2)
+    return out
 
 
-def write_json(rows: list[dict[str, Any]], path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(rows, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+_PASSPORT_RE = re.compile(
+    r'data-pr="(\d+)"[^>]*data-vfs="(\d+)"[^>]*data-code="([a-z]{2})"',
+    re.IGNORECASE,
+)
+
+def fetch_passport() -> dict[str, int]:
+    """passportindex.org/byRank.php — official Global Passport Power Rank."""
+    headers = {"User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    )}
+    html = requests.get("https://www.passportindex.org/byRank.php",
+                        headers=headers, timeout=30).text
+    return {code.upper(): int(rank)
+            for rank, _vfs, code in _PASSPORT_RE.findall(html)}
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+# --- factbook.json: cache one file per country, then extract many stats ----
 
-def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Rebuild data/countries.json from public sources.")
-    p.add_argument("--no-cache", action="store_true", help="ignore the on-disk HTTP cache")
-    p.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output JSON path")
-    args = p.parse_args(argv)
-    use_cache = not args.no_cache
+_FACTBOOK_FOLDERS = [
+    "europe", "africa", "australia-oceania", "central-america-n-caribbean",
+    "north-america", "south-america", "east-n-southeast-asia",
+    "south-asia", "central-asia", "middle-east",
+]
 
-    print("→ REST Countries (UN members)…")
-    base = fetch_rest_countries(use_cache)
-    print(f"  got {len(base)} rows")
+def fetch_factbook_files(base: list[dict[str, Any]]) -> None:
+    """Download each UN-member factbook JSON once into raw/factbook/{cca2}.json.
 
-    print("→ World Bank GDP per capita…")
-    gdp = fetch_worldbank_gdp([r["cca3"] for r in base], use_cache)
-    print(f"  got {len(gdp)} GDP values")
+    factbook.json uses lowercase ISO2 as the filename (e.g. `nl.json`), not a
+    name slug. Folders are by region — we try each candidate until one resolves.
+    """
+    fb_dir = RAW / "factbook"
+    fb_dir.mkdir(parents=True, exist_ok=True)
+    missing = [r for r in base
+               if not (fb_dir / f"{r['code'].lower()}.json").exists()]
+    if not missing:
+        return
+    print(f"fetching factbook/ ({len(missing)} files)…")
+    for r in missing:
+        code = r["code"].lower()
+        path = fb_dir / f"{code}.json"
+        for folder in _FACTBOOK_FOLDERS:
+            url = (f"https://raw.githubusercontent.com/factbook/factbook.json/"
+                   f"master/{folder}/{code}.json")
+            resp = requests.get(url, timeout=30)
+            if resp.status_code == 200:
+                path.write_text(resp.text, encoding="utf-8")
+                break
+        else:
+            # No folder matched — write an empty marker so we don't retry every run
+            path.write_text("{}", encoding="utf-8")
 
-    print("→ Passport Index ranks…")
-    ranks = fetch_passport_ranks(use_cache)
-    print(f"  got {len(ranks)} passport ranks")
 
-    print("→ CIA Factbook coastlines…")
-    coast = fetch_coastlines(base, use_cache)
-    populated = sum(1 for v in coast.values() if v is not None)
-    print(f"  got {populated} coastline values (of {len(coast)} attempted)")
+def load_factbook_files(base: list[dict[str, Any]]) -> dict[str, dict]:
+    """Ensure files are cached, then return {ISO2: parsed_json}."""
+    fetch_factbook_files(base)
+    out: dict[str, dict] = {}
+    for r in base:
+        path = RAW / "factbook" / f"{r['code'].lower()}.json"
+        try:
+            out[r["code"]] = json.loads(path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            out[r["code"]] = {}
+    return out
 
-    rows = build_rows(base, gdp, ranks, coast)
-    coverage_report(rows)
 
-    write_json(rows, args.out)
-    print(f"\nWrote {args.out.relative_to(REPO_ROOT) if args.out.is_absolute() and REPO_ROOT in args.out.parents else args.out} ({len(rows)} countries)")
-    return 0
+# Helpers for extractors ---------------------------------------------------
+
+_NUM_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+
+def _walk(d: Any, *keys: str) -> Any:
+    for k in keys:
+        if not isinstance(d, dict):
+            return None
+        d = d.get(k)
+    return d
+
+def _text(d: Any, *keys: str) -> str | None:
+    """Walk keys; return inner 'text' if dict, the value if string."""
+    n = _walk(d, *keys)
+    if isinstance(n, dict):
+        v = n.get("text")
+        return v if isinstance(v, str) else None
+    return n if isinstance(n, str) else None
+
+def _first_number(text: str | None) -> float | None:
+    if not text:
+        return None
+    m = _NUM_RE.search(text)
+    if not m:
+        return None
+    try:
+        return float(m.group().replace(",", ""))
+    except ValueError:
+        return None
+
+def _latest_year_text(node: Any, prefix: str) -> str | None:
+    """For dicts whose keys are 'Foo 2024', 'Foo 2023', ... pick the latest year."""
+    if not isinstance(node, dict):
+        return None
+    yearly = [(k, v) for k, v in node.items() if k.startswith(prefix)]
+    if yearly:
+        yearly.sort(reverse=True)
+        v = yearly[0][1]
+        return v.get("text") if isinstance(v, dict) else (v if isinstance(v, str) else None)
+    # Fallback: maybe the dict directly holds a "text" key
+    v = node.get("text")
+    return v if isinstance(v, str) else None
+
+
+# Per-stat extractors ------------------------------------------------------
+
+def extract_coastline(fb: dict) -> float | None:
+    text = _text(fb, "Geography", "Coastline")
+    if not text:
+        return None
+    if "landlocked" in text.lower():
+        return 0.0
+    return _first_number(text)
+
+def extract_life_expectancy(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society",
+                                   "Life expectancy at birth", "total population"))
+
+def extract_median_age(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Median age", "total"))
+
+def extract_population_growth(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Population growth rate"))
+
+def extract_obesity(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society",
+                                   "Obesity - adult prevalence rate"))
+
+def extract_alcohol(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society",
+                                   "Alcohol consumption per capita"))
+
+def extract_unemployment(fb: dict) -> float | None:
+    node = _walk(fb, "Economy", "Unemployment rate")
+    return _first_number(_latest_year_text(node, "Unemployment rate "))
+
+def extract_highest_point(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Geography", "Elevation", "highest point"))
+
+def extract_internet_users(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Communications", "Internet users",
+                                   "percent of population"))
+
+
+# Registry: (output_field_name, shard_filename, extractor)
+FACTBOOK_STATS: list[tuple[str, str, Callable[[dict], Any]]] = [
+    ("coastline_km",          "coastline.json",          extract_coastline),
+    ("life_expectancy_years", "life_expectancy.json",    extract_life_expectancy),
+    ("median_age_years",      "median_age.json",         extract_median_age),
+    ("population_growth_pct", "population_growth.json",  extract_population_growth),
+    ("obesity_pct",           "obesity_rate.json",       extract_obesity),
+    ("alcohol_l_per_year",    "alcohol_per_capita.json", extract_alcohol),
+    ("unemployment_pct",      "unemployment_rate.json",  extract_unemployment),
+    ("highest_point_m",       "highest_point.json",      extract_highest_point),
+    ("internet_users_pct",    "internet_users.json",     extract_internet_users),
+]
+
+
+def build_factbook_stat(extractor: Callable[[dict], Any],
+                        files: dict[str, dict]) -> dict[str, float]:
+    return {code: v for code, fb in files.items()
+            if (v := extractor(fb)) is not None}
+
+
+# --- merge -----------------------------------------------------------------
+
+def main() -> None:
+    base = load_or_build(RAW / "base.json", fetch_base)
+    gdp  = load_or_build(RAW / "gdp.json",      lambda: fetch_gdp([r["cca3"] for r in base]))
+    pp   = load_or_build(RAW / "passport.json", fetch_passport)
+
+    fb_files = load_factbook_files(base)
+    fb_stats: dict[str, dict[str, float]] = {}
+    for field, shard, extractor in FACTBOOK_STATS:
+        fb_stats[field] = load_or_build(
+            RAW / shard,
+            lambda e=extractor: build_factbook_stat(e, fb_files),
+        )
+
+    # Internal join keys that shouldn't appear in the public output.
+    BASE_INTERNAL_KEYS = {"cca3"}
+
+    rows = []
+    for b in base:
+        row = {k: v for k, v in b.items() if k not in BASE_INTERNAL_KEYS}
+        row["gdp_per_capita_usd"] = gdp.get(b["cca3"])
+        row["passport_rank"]      = pp.get(b["code"])
+        for field, _shard, _extractor in FACTBOOK_STATS:
+            row[field] = fb_stats[field].get(b["code"])
+        # Trust REST Countries' landlocked flag over factbook parsing.
+        if b.get("landlocked"):
+            row["coastline_km"] = 0.0
+        rows.append(row)
+    rows.sort(key=lambda r: r["name"])
+
+    OUT.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"wrote {OUT.name} ({len(rows)} countries)")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

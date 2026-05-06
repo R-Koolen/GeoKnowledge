@@ -1,10 +1,18 @@
 (() => {
   const STAT_META = {
-    passport_rank:      { label: "🛂 Passport Power", unit: "rank",    invert: true  },
-    gdp_per_capita_usd: { label: "💵 GDP per Capita", unit: "usd",     invert: false },
-    coastline_km:       { label: "🌊 Coastline",      unit: "km",      invert: false },
-    population:         { label: "👥 Population",     unit: "compact", invert: false },
-    area_km2:           { label: "🗺️ Area",          unit: "km2c",    invert: false },
+    passport_rank:          { label: "🛂 Passport Power",     unit: "rank",    invert: true  },
+    gdp_per_capita_usd:     { label: "💵 GDP per Capita",     unit: "usd",     invert: false },
+    coastline_km:           { label: "🌊 Coastline",          unit: "km",      invert: false },
+    population:             { label: "👥 Population",         unit: "compact", invert: false },
+    area_km2:               { label: "🗺️ Area",              unit: "km2c",    invert: false },
+    life_expectancy_years:  { label: "❤️ Life Expectancy",    unit: "years",   invert: false },
+    median_age_years:       { label: "🎂 Median Age",         unit: "years",   invert: false },
+    population_growth_pct:  { label: "📈 Population Growth",  unit: "pct",     invert: false },
+    obesity_pct:            { label: "🍔 Obesity Rate",       unit: "pct",     invert: false },
+    alcohol_l_per_year:     { label: "🍺 Alcohol per Capita", unit: "litres",  invert: false },
+    unemployment_pct:       { label: "💼 Unemployment",       unit: "pct",     invert: false },
+    highest_point_m:        { label: "⛰️ Highest Point",      unit: "m",       invert: false },
+    internet_users_pct:     { label: "🌐 Internet Users",     unit: "pct",     invert: false },
   };
 
   const TOTAL_ROUNDS = 8;
@@ -58,6 +66,10 @@
     if (meta.unit === "km")      return fullFmt.format(value) + " km";
     if (meta.unit === "compact") return compactFmt.format(value);
     if (meta.unit === "km2c")    return compactFmt.format(value) + " km²";
+    if (meta.unit === "years")   return value.toFixed(1) + " yrs";
+    if (meta.unit === "pct")     return value.toFixed(1) + "%";
+    if (meta.unit === "litres")  return value.toFixed(1) + " L";
+    if (meta.unit === "m")       return fullFmt.format(Math.round(value)) + " m";
     return fullFmt.format(value);
   }
 
@@ -67,9 +79,11 @@
   }
 
   function pickRandom(exclude) {
-    const pool = exclude
-      ? state.countries.filter(c => c.code !== exclude.code)
-      : state.countries;
+    const pool = state.countries.filter(c => {
+      if (c[state.stat] == null) return false;
+      if (exclude && c.code === exclude.code) return false;
+      return true;
+    });
     return pool[Math.floor(Math.random() * pool.length)];
   }
 

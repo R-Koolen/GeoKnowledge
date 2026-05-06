@@ -1,7 +1,8 @@
 .vscode/settings.json
+data/raw/
+.claude/settings.local.json
 
-# Data pipeline cache
-data/.cache/
+
 
 # Python
 __pycache__/
