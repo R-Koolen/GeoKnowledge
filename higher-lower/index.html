@@ -26,14 +26,16 @@
     <section id="start-screen" class="screen">
       <h2 class="screen__title">Higher or Lower</h2>
       <p class="screen__lead">
-        Pick a stat. Two countries appear stacked. Decide if the top country's value is
+        Two countries appear stacked. Decide if the top country's value is
         <strong>higher</strong> or <strong>lower</strong> than the bottom one. Get
         <strong>8 in a row</strong> to win — one wrong answer ends the game.
+        Leave the picker on <strong>🎲 Mix it up</strong> for a fresh stat each round, or lock to one.
       </p>
 
       <div class="stat-picker">
         <label for="stat">Stat</label>
         <select id="stat">
+          <option value="__random__" selected>🎲 Mix it up</option>
           <option value="passport_rank">🛂 Passport Power</option>
           <option value="gdp_per_capita_usd">💵 GDP per Capita</option>
           <option value="coastline_km">🌊 Coastline</option>

@@ -1,0 +1,164 @@
+/* Border Chain page only. Shared rules live in ../styles.css. */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 0 24px;
+}
+
+/* Two endpoints (start + end) with an arrow between them */
+.endpoints {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.endpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  flex: 1 1 220px;
+  max-width: 280px;
+}
+.endpoint .flag {
+  width: 180px;
+}
+.endpoint__name {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.endpoints__arrow {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+/* Chain list */
+.chain-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.chain-label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.chip--start  { background: var(--tile-blue); }
+.chip--end    { background: var(--pale); border-style: dashed; opacity: 0.85; }
+.chip--good   { background: var(--tile-green); }
+.chip--bad    { background: var(--tile-pink); }
+.chip__remove {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 0 2px;
+}
+.chip__remove:hover { transform: scale(1.15); }
+.chain__sep {
+  align-self: center;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+/* Add input form */
+.add-form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+}
+.add-form input {
+  flex: 1;
+  background: var(--white);
+  color: var(--ink);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  min-height: 50px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.add-form input:focus {
+  outline: none;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.add-form input.shake { animation: shake 0.3s; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.add-msg {
+  margin: 0;
+  min-height: 1.2em;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.add-msg.bad  { color: #b22a22; }
+.add-msg.good { color: #1a7a3e; }
+
+/* Submit / give up row */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 460px;
+}
+.action-buttons .btn { flex: 1; }
+
+/* End screen tweaks */
+#end-best { font-size: 0.95rem; }
+
+@media (min-width: 700px) {
+  .endpoint .flag { width: 220px; }
+  .endpoint__name { font-size: 1.4rem; }
+}

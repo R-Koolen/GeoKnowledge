@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Border Chain — GeoKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>
+      <a class="brand" href="../">
+        <span class="brand__dot" aria-hidden="true"></span>
+        GeoKnowledge
+      </a>
+    </h1>
+  </header>
+
+  <main>
+    <!-- START SCREEN -->
+    <section id="start-screen" class="screen">
+      <h2 class="screen__title">Border Chain</h2>
+      <p class="screen__lead">
+        Two countries appear at the top — they're reachable from each other by land.
+        Type the chain of <strong>bordering countries</strong> that connects them.
+        When you submit, you'll see your chain length next to the optimal one.
+        One round per game.
+      </p>
+      <button type="button" id="start-btn" class="btn btn--blue btn--xl">▶ Start</button>
+      <p id="loading" class="loading">Loading countries…</p>
+    </section>
+
+    <!-- GAME BOARD -->
+    <section id="board" class="board hidden" aria-live="polite">
+      <div class="endpoints">
+        <article class="endpoint" id="start-endpoint">
+          <img class="flag" id="start-flag" alt="" />
+          <h2 class="endpoint__name" id="start-name"></h2>
+        </article>
+        <span class="endpoints__arrow" aria-hidden="true">→</span>
+        <article class="endpoint" id="end-endpoint">
+          <img class="flag" id="end-flag" alt="" />
+          <h2 class="endpoint__name" id="end-name"></h2>
+        </article>
+      </div>
+
+      <div class="chain-section">
+        <p class="chain-label">Chain so far</p>
+        <ol class="chain" id="chain" aria-label="Country chain"></ol>
+      </div>
+
+      <form id="add-form" class="add-form" autocomplete="off" novalidate>
+        <input id="country-input"
+               type="text"
+               list="country-options"
+               placeholder="Type a country…"
+               autocapitalize="words"
+               spellcheck="false"
+               aria-label="Country to add" />
+        <datalist id="country-options"></datalist>
+        <button type="submit" class="btn btn--blue">Add</button>
+      </form>
+      <p id="add-msg" class="add-msg" aria-live="polite"></p>
+
+      <div class="action-buttons">
+        <button type="button" id="submit-btn" class="btn btn--good">✓ Submit</button>
+        <button type="button" id="giveup-btn" class="btn btn--soft">⨯ Give up</button>
+      </div>
+    </section>
+
+    <!-- END SCREEN -->
+    <section id="end-screen" class="screen hidden">
+      <h2 id="end-title" class="screen__title">Done</h2>
+      <p class="screen__lead" id="end-summary"></p>
+      <p class="screen__lead" id="end-best"></p>
+      <button type="button" id="play-again" class="btn btn--blue btn--xl">↻ Play again</button>
+      <a class="btn btn--soft" href="../">⌂ Home</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>Find the shortest chain of bordering countries.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

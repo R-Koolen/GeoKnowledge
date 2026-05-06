@@ -163,3 +163,46 @@ footer {
   .topbar { padding: 22px 24px; }
   .section-title { font-size: 1.9rem; }
 }
+
+/* Start / end screen layout — used by every game page */
+.screen {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 32px 16px 16px;
+}
+.screen__title {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+.screen__lead {
+  margin: 0;
+  color: var(--ink-soft);
+  max-width: 520px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.screen__title.win  { color: #1a7a3e; }
+.screen__title.lose { color: #b22a22; }
+
+/* Country flag image — used by every game page */
+.flag {
+  width: 220px;
+  max-width: 70%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--pale);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+
+.loading { color: var(--ink-soft); margin: 0; font-weight: 600; }
+
+@media (min-width: 700px) {
+  .flag { width: 260px; }
+  .screen__title { font-size: 2.4rem; }
+}

@@ -49,15 +49,32 @@
     loading: document.getElementById("loading"),
   };
 
+  const RANDOM_STAT = "__random__";
+
   const state = {
     countries: [],
-    top: null,    // hidden value — what user is guessing
-    bottom: null, // revealed value — reference
-    stat: "passport_rank",
+    top: null,             // hidden value — what user is guessing
+    bottom: null,          // revealed value — reference
+    statChoice: RANDOM_STAT, // dropdown selection (locked stat OR sentinel)
+    activeStat: null,      // resolved stat for the current round
+    eligibleStats: [],     // stats with ≥2 countries having a value
     score: 0,
     round: 0,
     locked: false,
   };
+
+  function computeEligibleStats() {
+    return Object.keys(STAT_META).filter(k =>
+      state.countries.filter(c => c[k] != null).length >= 2
+    );
+  }
+
+  function pickRandomStat(exclude) {
+    const pool = exclude
+      ? state.eligibleStats.filter(s => s !== exclude)
+      : state.eligibleStats;
+    return pool[Math.floor(Math.random() * pool.length)] || state.eligibleStats[0];
+  }
 
   function formatValue(stat, value) {
     const meta = STAT_META[stat];
@@ -80,7 +97,7 @@
 
   function pickRandom(exclude) {
     const pool = state.countries.filter(c => {
-      if (c[state.stat] == null) return false;
+      if (c[state.activeStat] == null) return false;
       if (exclude && c.code === exclude.code) return false;
       return true;
     });
@@ -99,7 +116,7 @@
     els.bottomFlag.srcset = flagSrcSet(country);
     els.bottomFlag.alt = `Flag of ${country.name}`;
     els.bottomName.textContent = country.name;
-    els.bottomValue.textContent = formatValue(state.stat, country[state.stat]);
+    els.bottomValue.textContent = formatValue(state.activeStat, country[state.activeStat]);
   }
 
   function renderTopHidden(country) {
@@ -112,13 +129,13 @@
   }
 
   function revealTop(country) {
-    els.topValue.textContent = formatValue(state.stat, country[state.stat]);
+    els.topValue.textContent = formatValue(state.activeStat, country[state.activeStat]);
     els.topValue.classList.remove("country__value--hidden");
   }
 
   function showRound() {
     els.round.textContent = state.round;
-    els.statLabel.textContent = STAT_META[state.stat].label;
+    els.statLabel.textContent = STAT_META[state.activeStat].label;
     renderBottom(state.bottom);
     renderTopHidden(state.top);
     els.choiceButtons.classList.remove("hidden");
@@ -129,7 +146,15 @@
 
   function startRound(keepBottom) {
     state.round += 1;
-    if (!keepBottom) state.bottom = pickRandom(null);
+    if (state.statChoice === RANDOM_STAT) {
+      // Fresh stat each round; avoid repeating the previous one when possible.
+      state.activeStat = pickRandomStat(state.activeStat);
+      // Random stat → fresh pair, since previous top might lack the new stat.
+      state.bottom = pickRandom(null);
+    } else {
+      state.activeStat = state.statChoice;
+      if (!keepBottom) state.bottom = pickRandom(null);
+    }
     state.top = pickRandom(state.bottom);
     showRound();
   }
@@ -138,8 +163,8 @@
     if (state.locked) return;
     state.locked = true;
 
-    const tv = effectiveValue(state.top, state.stat);
-    const bv = effectiveValue(state.bottom, state.stat);
+    const tv = effectiveValue(state.top, state.activeStat);
+    const bv = effectiveValue(state.bottom, state.activeStat);
 
     let correct;
     if (tv === bv) correct = true;
@@ -205,8 +230,16 @@
       return;
     }
 
+    state.eligibleStats = computeEligibleStats();
+    if (state.eligibleStats.length === 0) {
+      els.loading.classList.remove("hidden");
+      els.loading.textContent = "No stats have enough data to play with.";
+      els.startBtn.disabled = true;
+      return;
+    }
+
     els.loading.classList.add("hidden");
-    els.stat.value = state.stat;
+    els.stat.value = state.statChoice;
 
     els.startBtn.addEventListener("click", startGame);
     els.playAgain.addEventListener("click", backToStart);
@@ -215,7 +248,7 @@
       if (btn) handleChoice(btn.dataset.choice);
     });
     els.stat.addEventListener("change", () => {
-      state.stat = els.stat.value;
+      state.statChoice = els.stat.value;
     });
   }
 
