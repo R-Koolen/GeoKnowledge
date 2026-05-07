@@ -1,6 +1,40 @@
 /* Stat Match page only.
    Shared rules (.screen, .flag, .btn, .pill, .loading) live in ../styles.css. */
 
+/* ── Region picker (start screen) ───────────────────────────────── */
+
+.region-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.region-btn {
+  background: var(--white);
+  color: var(--ink);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.region-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.region-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.region-btn--active {
+  background: var(--tile-purple);
+}
+
 /* ── Board layout ────────────────────────────────────────────────── */
 
 .board {

@@ -48,6 +48,7 @@
 
   const state = {
     allCountries: [],
+    region: "all",        // "all" or a continent string from countries.json
     stats: [],
     countries: [],
     globalRanks: {},      // {statKey: {countryCode: rank}}
@@ -130,14 +131,18 @@
     // Pick 8 stats
     state.stats = sample(STAT_POOL, ROUND_SIZE);
 
-    // Pick countries that have all 8 stats non-null
-    const eligible = state.allCountries.filter(c =>
+    // Apply region filter, then pick countries that have all 8 stats non-null
+    const pool = state.region === "all"
+      ? state.allCountries
+      : state.allCountries.filter(c => c.continent === state.region);
+
+    const eligible = pool.filter(c =>
       state.stats.every(s => c[s.key] != null)
     );
     if (eligible.length < ROUND_SIZE) {
       // Fallback: relax to requiring only 6 of 8 stats (fill missing with null-rank fallback)
       state.countries = sample(
-        state.allCountries.filter(c => state.stats.filter(s => c[s.key] != null).length >= 6),
+        pool.filter(c => state.stats.filter(s => c[s.key] != null).length >= 6),
         ROUND_SIZE
       );
     } else {
@@ -380,6 +385,15 @@
     }
 
     els.loading.classList.add("hidden");
+
+    document.querySelectorAll(".region-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".region-btn").forEach(b => b.classList.remove("region-btn--active"));
+        btn.classList.add("region-btn--active");
+        state.region = btn.dataset.region;
+      });
+    });
+
     els.startBtn.addEventListener("click", startGame);
     els.submitBtn.addEventListener("click", submit);
     els.resetBtn.addEventListener("click", resetRound);
