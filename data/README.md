@@ -43,7 +43,7 @@ data/
 
 ## Add a new factbook stat
 
-Three small steps:
+See [FACTBOOK_FIELDS.md](FACTBOOK_FIELDS.md) for the full list of available paths in a factbook entry. Three small steps:
 
 1. **Pipeline** (`data/build_countries.py`) — write an extractor and register it:
    ```python

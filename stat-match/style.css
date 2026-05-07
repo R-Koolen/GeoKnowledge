@@ -1,0 +1,297 @@
+/* Stat Match page only.
+   Shared rules (.screen, .flag, .btn, .pill, .loading) live in ../styles.css. */
+
+/* ── Board layout ────────────────────────────────────────────────── */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board__columns {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.board__actions .btn { min-width: 140px; }
+
+.col-label {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+
+/* ── Country cards ───────────────────────────────────────────────── */
+
+.country-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.country-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-card);
+  padding: 10px 6px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: transform 0.08s, box-shadow 0.08s;
+  box-shadow: 3px 3px 0 var(--ink);
+  user-select: none;
+}
+.country-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.country-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.country-card .flag {
+  width: 100%;
+  max-width: 160px;
+  box-shadow: none;
+}
+.country-card__name {
+  line-height: 1.2;
+  word-break: break-word;
+  hyphens: auto;
+}
+.country-card__tag {
+  font-size: 0.65rem;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+/* Selected */
+.country-card--selected {
+  border-color: var(--tile-blue);
+  box-shadow: 3px 3px 0 var(--tile-blue);
+  background: #dceeff;
+}
+
+/* Assigned */
+.country-card--assigned {
+  opacity: 0.5;
+  cursor: default;
+}
+.country-card--assigned:hover {
+  transform: none;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* ── Stat rows ───────────────────────────────────────────────────── */
+
+.stat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-card);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+  box-shadow: 3px 3px 0 var(--ink);
+  min-height: 56px;
+}
+.stat-row:hover { background: var(--pale); }
+
+/* Pulsing highlight when a country is selected — invites the player to click */
+.stat-row--highlighted {
+  border-color: var(--tile-blue);
+  box-shadow: 3px 3px 0 var(--tile-blue);
+  animation: pulse-border 1s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--tile-blue); }
+  50%       { border-color: var(--tile-purple); }
+}
+
+.stat-row__label {
+  flex: 1 1 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.stat-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+  justify-content: flex-end;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.stat-slot__flag {
+  width: 36px;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.stat-slot__name {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+.stat-slot__remove {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-weight: 900;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+  padding: 0 2px;
+  line-height: 1;
+}
+.stat-slot__remove:hover { color: var(--ink); transform: scale(1.2); }
+
+/* ── Result table ────────────────────────────────────────────────── */
+
+.result-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.result-table th {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  border-bottom: var(--border-w) solid var(--ink);
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+.result-table td {
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--pale);
+  vertical-align: middle;
+}
+.result-table tfoot td {
+  border-top: var(--border-w) solid var(--ink);
+  border-bottom: none;
+  font-weight: 800;
+  padding-top: 10px;
+}
+
+.rt-flag {
+  width: 30px;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.rt-country { white-space: nowrap; }
+.rt-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.rt-rank {
+  text-align: center;
+  white-space: nowrap;
+}
+.rt-rank--match { color: #1a7a3e; }
+.rt-rank--close { color: #b07800; }
+.rt-rank--miss  { color: #b22a22; }
+
+.rt-your { background: #fafef7; }
+.rt-opt  { background: #f5fbff; }
+
+.end-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (min-width: 700px) {
+  .board__columns {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 24px;
+  }
+  .board__left {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .board__right { flex: 1 1 0; min-width: 0; }
+
+  /* Grid fills the full height of the left column, rows divide evenly */
+  .country-grid {
+    flex: 1;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .country-card {
+    height: 100%;
+    font-size: 0.8rem;
+    justify-content: center;
+  }
+  /* Flag height drives card height — cap it so 4 rows match the stat list */
+  .country-card .flag {
+    width: 100%;
+    max-width: 100%;
+    max-height: 72px;
+    object-fit: contain;
+  }
+
+  .stat-row__label { font-size: 0.95rem; }
+}
+
+@media (max-width: 699px) {
+  .country-grid { grid-template-columns: repeat(2, 1fr); }
+  .country-card .flag { max-width: 160px; }
+  .country-card { font-size: 0.8rem; padding: 10px 8px; }
+  .stat-slot__name { display: none; }
+}

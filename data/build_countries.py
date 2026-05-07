@@ -292,18 +292,116 @@ def extract_internet_users(fb: dict) -> float | None:
     return _first_number(_text(fb, "Communications", "Internet users",
                                    "percent of population"))
 
+# Geography
+def extract_lowest_point(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Geography", "Elevation", "lowest point"))
+
+def extract_land_agricultural(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Geography", "Land use", "agricultural land"))
+
+def extract_land_forest(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Geography", "Land use", "forest"))
+
+# Age structure
+def extract_age_0_14(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Age structure", "0-14 years"))
+
+def extract_age_15_64(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Age structure", "15-64 years"))
+
+def extract_age_65_plus(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Age structure", "65 years and over"))
+
+# People
+def extract_birth_rate(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Birth rate"))
+
+def extract_urban_population(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Urbanization", "urban population"))
+
+def extract_tobacco(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society", "Tobacco use", "total"))
+
+def extract_married_women(fb: dict) -> float | None:
+    return _first_number(_text(fb, "People and Society",
+                                   "Currently married women (ages 15-49)"))
+
+# Economy — GDP composition
+def extract_gdp_agriculture(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Economy",
+                                   "GDP - composition, by sector of origin", "agriculture"))
+
+def extract_gdp_industry(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Economy",
+                                   "GDP - composition, by sector of origin", "industry"))
+
+def extract_gdp_services(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Economy",
+                                   "GDP - composition, by sector of origin", "services"))
+
+# Household expenditures
+def extract_hh_food(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Economy", "Average household expenditures", "on food"))
+
+def extract_hh_alcohol_tobacco(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Economy", "Average household expenditures",
+                                   "on alcohol and tobacco"))
+
+# Exports — values like "$671.8 billion (2024 est.)" or "$1.2 trillion"
+_USD_RE = re.compile(r"\$?\s*([\d,.]+)\s*(trillion|billion|million)", re.IGNORECASE)
+
+def extract_exports(fb: dict) -> float | None:
+    node = _walk(fb, "Economy", "Exports")
+    text = _latest_year_text(node, "Exports ")
+    if not text:
+        return None
+    m = _USD_RE.search(text)
+    if not m:
+        return None
+    num = float(m.group(1).replace(",", ""))
+    unit = m.group(2).lower()
+    if unit == "trillion": return round(num * 1e12)
+    if unit == "billion":  return round(num * 1e9)
+    return round(num * 1e6)
+
+# Mobile
+def extract_mobile_per_100(fb: dict) -> float | None:
+    return _first_number(_text(fb, "Communications", "Telephones - mobile cellular",
+                                   "subscriptions per 100 inhabitants"))
+
 
 # Registry: (output_field_name, extractor). Add a tuple here to add a stat.
 FACTBOOK_STATS: list[tuple[str, Callable[[dict], Any]]] = [
-    ("coastline_km",          extract_coastline),
-    ("life_expectancy_years", extract_life_expectancy),
-    ("median_age_years",      extract_median_age),
-    ("population_growth_pct", extract_population_growth),
-    ("obesity_pct",           extract_obesity),
-    ("alcohol_l_per_year",    extract_alcohol),
-    ("unemployment_pct",      extract_unemployment),
-    ("highest_point_m",       extract_highest_point),
-    ("internet_users_pct",    extract_internet_users),
+    # Geography
+    ("coastline_km",                   extract_coastline),
+    ("lowest_point_m",                 extract_lowest_point),
+    ("land_agricultural_pct",          extract_land_agricultural),
+    ("land_forest_pct",                extract_land_forest),
+    ("highest_point_m",                extract_highest_point),
+    # People and Society
+    ("life_expectancy_years",          extract_life_expectancy),
+    ("median_age_years",               extract_median_age),
+    ("population_growth_pct",          extract_population_growth),
+    ("birth_rate_per_1000",            extract_birth_rate),
+    ("age_0_14_pct",                   extract_age_0_14),
+    ("age_15_64_pct",                  extract_age_15_64),
+    ("age_65_plus_pct",                extract_age_65_plus),
+    ("urban_population_pct",           extract_urban_population),
+    ("obesity_pct",                    extract_obesity),
+    ("alcohol_l_per_year",             extract_alcohol),
+    ("tobacco_use_pct",                extract_tobacco),
+    ("married_women_pct",              extract_married_women),
+    # Economy
+    ("unemployment_pct",               extract_unemployment),
+    ("gdp_sector_agriculture_pct",     extract_gdp_agriculture),
+    ("gdp_sector_industry_pct",        extract_gdp_industry),
+    ("gdp_sector_services_pct",        extract_gdp_services),
+    ("household_expenditure_food_pct", extract_hh_food),
+    ("household_expenditure_alcohol_tobacco_pct", extract_hh_alcohol_tobacco),
+    ("exports_usd",                    extract_exports),
+    # Communications
+    ("internet_users_pct",             extract_internet_users),
+    ("mobile_per_100",                 extract_mobile_per_100),
 ]
 
 

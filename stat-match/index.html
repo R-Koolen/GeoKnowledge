@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stat Match — GeoKnowledge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>
+      <a class="brand" href="../">
+        <span class="brand__dot" aria-hidden="true"></span>
+        GeoKnowledge
+      </a>
+    </h1>
+  </header>
+
+  <main>
+    <!-- START SCREEN -->
+    <section id="start-screen" class="screen">
+      <h2 class="screen__title">Stat Match</h2>
+      <p class="screen__lead">
+        8 countries, 8 stats — <strong>no values shown</strong>. Assign each country to the stat
+        where it ranks highest <em>globally</em>. Score = sum of global ranks (lower is better).
+        Use your world knowledge to minimise the total — sometimes a tactical placement beats
+        chasing the obvious best.
+      </p>
+      <button type="button" id="start-btn" class="btn btn--blue btn--xl">▶ Start</button>
+      <p id="loading" class="loading">Loading countries…</p>
+    </section>
+
+    <!-- GAME BOARD -->
+    <section id="board" class="board hidden" aria-label="Game board">
+      <div class="board__columns">
+
+        <!-- Left: country cards -->
+        <div class="board__left">
+          <p class="col-label">Countries</p>
+          <ul class="country-grid" id="country-grid" aria-label="Countries to assign"></ul>
+        </div>
+
+        <!-- Right: stat rows -->
+        <div class="board__right">
+          <p class="col-label">Stats</p>
+          <ul class="stat-list" id="stat-list" aria-label="Stats"></ul>
+        </div>
+
+      </div>
+
+      <div class="board__actions">
+        <button type="button" id="submit-btn" class="btn btn--good" disabled>✓ Submit</button>
+        <button type="button" id="reset-btn"  class="btn btn--soft">↺ Reset</button>
+      </div>
+    </section>
+
+    <!-- END SCREEN -->
+    <section id="end-screen" class="screen hidden">
+      <h2 id="end-title" class="screen__title">Done</h2>
+      <p class="screen__lead" id="end-score"></p>
+      <div class="result-table-wrap">
+        <table class="result-table" id="result-table">
+          <thead>
+            <tr>
+              <th>Stat</th>
+              <th>Your pick</th>
+              <th>Rank</th>
+              <th>Optimal pick</th>
+              <th>Rank</th>
+            </tr>
+          </thead>
+          <tbody id="result-body"></tbody>
+          <tfoot id="result-foot"></tfoot>
+        </table>
+      </div>
+      <div class="end-buttons">
+        <button type="button" id="play-again" class="btn btn--blue btn--xl">↻ Play again</button>
+        <a class="btn btn--soft" href="../">⌂ Home</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Assign each country to the stat where it ranks best worldwide.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
