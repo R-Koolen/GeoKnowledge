@@ -266,6 +266,10 @@
   gap: 6px;
   white-space: nowrap;
 }
+.rt-val {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
 .rt-rank {
   text-align: center;
   white-space: nowrap;
@@ -324,8 +328,8 @@
 }
 
 @media (max-width: 699px) {
-  .country-grid { grid-template-columns: repeat(2, 1fr); }
-  .country-card .flag { max-width: 160px; }
-  .country-card { font-size: 0.8rem; padding: 10px 8px; }
+  .country-grid { grid-template-columns: repeat(4, 1fr); }
+  .country-card { font-size: 0.7rem; padding: 6px 4px; }
+  .country-card .flag { max-height: 50px; object-fit: contain; }
   .stat-slot__name { display: none; }
 }

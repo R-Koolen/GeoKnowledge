@@ -1,31 +1,53 @@
 (() => {
   // ── Stat pool ──────────────────────────────────────────────────────────
   // invert: true  → lower raw value = globally better (e.g. passport rank 1 = strongest)
+  // fmt codes: pct | usd | m | km | km2 | compact | rank | per1000 | L | per100
   const STAT_POOL = [
-    { key: "population",              label: "👥 Population" },
-    { key: "area_km2",                label: "🗺️ Area" },
-    { key: "gdp_per_capita_usd",      label: "💵 GDP per Capita" },
-    { key: "passport_rank",           label: "🛂 Passport Power",       invert: true },
-    { key: "coastline_km",            label: "🌊 Coastline" },
-    { key: "life_expectancy_years",   label: "❤️ Life Expectancy" },
-    { key: "median_age_years",        label: "🎂 Median Age" },
-    { key: "obesity_pct",             label: "🍔 Obesity Rate" },
-    { key: "highest_point_m",         label: "⛰️ Highest Point" },
-    { key: "lowest_point_m",          label: "🕳️ Lowest Point" },
-    { key: "internet_users_pct",      label: "🌐 Internet Users" },
-    { key: "unemployment_pct",        label: "💼 Unemployment" },
-    { key: "urban_population_pct",    label: "🏙️ Urbanisation" },
-    { key: "birth_rate_per_1000",     label: "👶 Birth Rate" },
-    { key: "population_growth_pct",   label: "📈 Population Growth" },
-    { key: "mobile_per_100",          label: "📱 Mobile Phones" },
-    { key: "land_forest_pct",         label: "🌲 Forest Cover" },
-    { key: "land_agricultural_pct",   label: "🌾 Agricultural Land" },
-    { key: "tobacco_use_pct",         label: "🚬 Tobacco Use" },
-    { key: "alcohol_l_per_year",      label: "🍺 Alcohol Consumption" },
-    { key: "married_women_pct",       label: "💍 Married Women" },
-    { key: "gdp_sector_services_pct", label: "🏦 Services GDP Share" },
-    { key: "gdp_sector_agriculture_pct", label: "🌿 Agriculture GDP" },
+    { key: "population",              label: "👥 Population",          fmt: "compact" },
+    { key: "area_km2",                label: "🗺️ Area",                fmt: "km2"     },
+    { key: "gdp_per_capita_usd",      label: "💵 GDP per Capita",      fmt: "usd"     },
+    { key: "passport_rank",           label: "🛂 Passport Power",      fmt: "rank",   invert: true },
+    { key: "coastline_km",            label: "🌊 Coastline",           fmt: "km"      },
+    { key: "life_expectancy_years",   label: "❤️ Life Expectancy",     fmt: "yrs"     },
+    { key: "median_age_years",        label: "🎂 Median Age",          fmt: "yrs"     },
+    { key: "obesity_pct",             label: "🍔 Obesity Rate",        fmt: "pct"     },
+    { key: "highest_point_m",         label: "⛰️ Highest Point",       fmt: "m"       },
+    { key: "lowest_point_m",          label: "🕳️ Lowest Point",        fmt: "m"       },
+    { key: "internet_users_pct",      label: "🌐 Internet Users",      fmt: "pct"     },
+    { key: "unemployment_pct",        label: "💼 Unemployment",        fmt: "pct"     },
+    { key: "urban_population_pct",    label: "🏙️ Urbanisation",        fmt: "pct"     },
+    { key: "birth_rate_per_1000",     label: "👶 Birth Rate",          fmt: "per1000" },
+    { key: "population_growth_pct",   label: "📈 Population Growth",   fmt: "pct"     },
+    { key: "mobile_per_100",          label: "📱 Mobile Phones",       fmt: "per100"  },
+    { key: "land_forest_pct",         label: "🌲 Forest Cover",        fmt: "pct"     },
+    { key: "land_agricultural_pct",   label: "🌾 Agricultural Land",   fmt: "pct"     },
+    { key: "tobacco_use_pct",         label: "🚬 Tobacco Use",         fmt: "pct"     },
+    { key: "alcohol_l_per_year",      label: "🍺 Alcohol Consumption", fmt: "L"       },
+    { key: "married_women_pct",       label: "💍 Married Women",       fmt: "pct"     },
+    { key: "gdp_sector_services_pct", label: "🏦 Services GDP Share",  fmt: "pct"     },
+    { key: "gdp_sector_agriculture_pct", label: "🌿 Agriculture GDP",  fmt: "pct"     },
   ];
+
+  const compactFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+  const fullFmt    = new Intl.NumberFormat("en-US");
+
+  function fmtValue(fmt, val) {
+    if (val == null) return "—";
+    switch (fmt) {
+      case "pct":     return val.toFixed(1) + "%";
+      case "usd":     return "$" + fullFmt.format(Math.round(val));
+      case "m":       return fullFmt.format(Math.round(val)) + " m";
+      case "km":      return fullFmt.format(Math.round(val)) + " km";
+      case "km2":     return compactFmt.format(val) + " km²";
+      case "compact": return compactFmt.format(val);
+      case "rank":    return "Rank " + val;
+      case "yrs":     return val.toFixed(1) + " yrs";
+      case "per1000": return val.toFixed(1) + " /1k";
+      case "L":       return val.toFixed(1) + " L";
+      case "per100":  return val.toFixed(0) + " /100";
+      default:        return String(val);
+    }
+  }
 
   const ROUND_SIZE = 8;
 
@@ -71,6 +93,27 @@
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy.slice(0, n);
+  }
+
+  function cappedSample(pool, n, maxPerContinent) {
+    const shuffled = sample(pool, pool.length); // full shuffle
+    const picked = [];
+    const counts = {};
+    for (const c of shuffled) {
+      const cont = c.continent || "Unknown";
+      if ((counts[cont] ?? 0) >= maxPerContinent) continue;
+      picked.push(c);
+      counts[cont] = (counts[cont] ?? 0) + 1;
+      if (picked.length === n) break;
+    }
+    // Fallback: fill remainder without cap if pool was too small
+    if (picked.length < n) {
+      for (const c of shuffled) {
+        if (!picked.includes(c)) { picked.push(c); }
+        if (picked.length === n) break;
+      }
+    }
+    return picked;
   }
 
   // ── Global rank computation ────────────────────────────────────────────
@@ -141,12 +184,14 @@
     );
     if (eligible.length < ROUND_SIZE) {
       // Fallback: relax to requiring only 6 of 8 stats (fill missing with null-rank fallback)
-      state.countries = sample(
-        pool.filter(c => state.stats.filter(s => c[s.key] != null).length >= 6),
-        ROUND_SIZE
-      );
+      const relaxed = pool.filter(c => state.stats.filter(s => c[s.key] != null).length >= 6);
+      state.countries = state.region === "all"
+        ? cappedSample(relaxed, ROUND_SIZE, 3)
+        : sample(relaxed, ROUND_SIZE);
     } else {
-      state.countries = sample(eligible, ROUND_SIZE);
+      state.countries = state.region === "all"
+        ? cappedSample(eligible, ROUND_SIZE, 3)
+        : sample(eligible, ROUND_SIZE);
     }
 
     state.globalRanks = computeGlobalRanks(state.stats);
@@ -329,11 +374,11 @@
         <tr>
           <td>${stat.label}</td>
           <td class="rt-your rt-country">
-            ${userCountry ? `<span class="rt-pick"><img class="rt-flag" src="${flagSrc(userCountry.code)}" alt="" /><span>${userCountry.name}</span></span>` : "—"}
+            ${userCountry ? `<span class="rt-pick"><img class="rt-flag" src="${flagSrc(userCountry.code)}" alt="" /><span>${userCountry.name} <span class="rt-val">(${fmtValue(stat.fmt, userCountry[stat.key])})</span></span></span>` : "—"}
           </td>
           <td class="rt-your rt-rank ${rankClass}">#${userRank}</td>
           <td class="rt-opt rt-country">
-            ${optCountry ? `<span class="rt-pick"><img class="rt-flag" src="${flagSrc(optCountry.code)}" alt="" /><span>${optCountry.name}</span></span>` : "—"}
+            ${optCountry ? `<span class="rt-pick"><img class="rt-flag" src="${flagSrc(optCountry.code)}" alt="" /><span>${optCountry.name} <span class="rt-val">(${fmtValue(stat.fmt, optCountry[stat.key])})</span></span></span>` : "—"}
           </td>
           <td class="rt-opt rt-rank">#${optRank}</td>
         </tr>
