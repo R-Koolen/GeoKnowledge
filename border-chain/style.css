@@ -105,46 +105,7 @@
   color: var(--ink-soft);
 }
 
-/* Add input form */
-.add-form {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  max-width: 460px;
-}
-.add-form input {
-  flex: 1;
-  background: var(--white);
-  color: var(--ink);
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--radius-pill);
-  padding: 12px 18px;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  min-height: 50px;
-  box-shadow: 4px 4px 0 var(--ink);
-}
-.add-form input:focus {
-  outline: none;
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 var(--ink);
-}
-.add-form input.shake { animation: shake 0.3s; }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
-}
-
-.add-msg {
-  margin: 0;
-  min-height: 1.2em;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
-.add-msg.bad  { color: #b22a22; }
-.add-msg.good { color: #1a7a3e; }
+/* .add-form, .add-msg, @keyframes shake live in ../styles.css now (shared). */
 
 /* Submit / give up row */
 .action-buttons {

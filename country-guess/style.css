@@ -1,0 +1,165 @@
+/* Country Guess page only.
+   Shared rules (.screen, .flag, .btn, .pill, .loading, .add-form, .add-msg) live in ../styles.css. */
+
+.board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 24px;
+}
+
+/* Legend above the guess list */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.legend__item {
+  white-space: nowrap;
+}
+
+/* Guess history list */
+.guess-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guess-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  background: var(--white);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-card);
+  padding: 10px 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.guess-row--win {
+  background: var(--tile-green);
+}
+
+.guess-row__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1rem;
+  min-width: 0;
+}
+.guess-row__flag {
+  width: 36px;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.guess-row__name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Feedback chips: wrap into a row, each shows guess-value + arrow */
+.fb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--pale);
+  font-weight: 800;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+.fb-chip__icon { font-size: 0.9rem; }
+.fb-chip__val  { font-weight: 700; }
+.fb-chip__sig  { font-weight: 900; }
+.fb-chip--match { background: var(--tile-green); }
+.fb-chip--miss  { background: var(--tile-pink); }
+.fb-chip--up    { background: #ffe9c2; }   /* warm hint, target higher */
+.fb-chip--down  { background: #d9eeff; }   /* cool hint, target lower */
+.fb-chip--equal { background: var(--tile-green); }
+
+/* Reveal card on end screen */
+.reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--radius-card);
+  padding: 18px 16px;
+  box-shadow: 5px 5px 0 var(--ink);
+  width: 100%;
+  max-width: 460px;
+}
+.reveal__name {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.reveal__stats {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.reveal__stats li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--pale);
+}
+.reveal__stats li > span:first-child { color: var(--ink-soft); }
+.reveal__stats li > span:last-child  { color: var(--ink); white-space: nowrap; }
+
+.end-history-label {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.end-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .fb-chip { font-size: 0.74rem; padding: 3px 8px; }
+  .reveal__stats { grid-template-columns: 1fr; }
+  .guess-row__name { font-size: 0.92rem; }
+}
