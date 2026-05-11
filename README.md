@@ -54,3 +54,6 @@ The site has a home page that links out to individual game pages. Each game live
 ```
 
 To add another game, create a sibling folder (e.g. `flag-quiz/`) with the same three files, and add a link to it from `index.html`.
+
+todo:
+distance between countries' stats above minimum to prevent the same countries
